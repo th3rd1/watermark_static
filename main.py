@@ -1,5 +1,5 @@
-from tkinter import filedialog, Text, WORD, Toplevel, Label
-from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageTk
+from tkinter import filedialog, Text, WORD
+from PIL import Image, ImageFont, ImageDraw, ImageTk
 import customtkinter
 
 is_text_watermark = False
@@ -48,12 +48,12 @@ def text_watermark(text_input, tar_img_path):
     display_img(text_watermarked_img)
     is_text_watermark = True
 
-
-def image_watermark(tar_img_path):
+def image_watermark(watermark_img_path ,tar_img_path):
     global image_watermarked_img, is_image_watermark
     image = Image.open(tar_img_path)
+    watermark_img = Image.open(watermark_img_path)
     size = (500, 200)
-    crop_image = image.copy()
+    crop_image = watermark_img.copy()
     crop_image.thumbnail(size)
 
     # add watermark
@@ -66,6 +66,16 @@ def image_watermark(tar_img_path):
     display_img(image_watermarked_img)
     is_image_watermark = True
 
+def select_watermark_img():
+    global selected_img
+    selected_img = filedialog.askopenfilename(initialdir="/", filetypes=(("jpg files", "*.jpg"), ("png files", "*.png"),
+                                                                         ("any file", "*")))
+    if selected_img:
+        try:
+            image_watermark(selected_img, picture_path)
+        except NameError:
+            error = "No Image selected, please select an image first"
+            error_popup(error)
 
 def select_text():
     global selected_text
@@ -76,6 +86,27 @@ def select_text():
         except NameError:
             error = "No Image selected, please select an image first"
             error_popup(error)
+
+
+def select_watermark_type():
+    select_watermark_win = customtkinter.CTkToplevel(root)
+    select_watermark_win.title("Select your watermark type")
+    select_watermark_win.geometry("600x200")
+    select_watermark_win.attributes('-topmost', True)
+
+    def close():
+        select_watermark_win.destroy()
+        select_watermark_win.update()
+
+    close_watermark_button = customtkinter.CTkButton(select_watermark_win, text="Close", command=close)
+    close_watermark_button.grid(row=0, column=3, padx=10)
+
+    image_watermark_button = customtkinter.CTkButton(select_watermark_win, text="Create Image Watermark", command=select_watermark_img)
+    image_watermark_button.grid(row=0, column=2, padx=10)
+
+    text_watermark_button = customtkinter.CTkButton(select_watermark_win, text="Create Text Watermark",
+                                                    command=select_text)
+    text_watermark_button.grid(row=0, column=1, padx=10)
 
 def save_img():
     if is_text_watermark:
@@ -89,7 +120,7 @@ def save_img():
         image_watermarked_img.save(f"output/{img_title}.png")
         image_watermarked_img.save(f"{save_path}/{img_title}.png")
     else:
-        error = "No image created, plase select a photo and watermark"
+        error = "No image created, please select a photo and watermark"
         error_popup(error)
 
 
@@ -97,8 +128,12 @@ def error_popup(error_text):
    top = customtkinter.CTkToplevel(root)
    top.geometry("500x250")
    top.title("Error")
-   customtkinter.CTkLabel(top, text=error_text).place(x=100,y=125)
+   customtkinter.CTkLabel(top, text=error_text).place(x=100, y=125)
    top.attributes('-topmost', 'true')
+
+def clear_img(img):
+    global display_image
+    display_image.config(image="")
 
 
 # User Interface layout
@@ -111,16 +146,19 @@ text_widget = Text(root, wrap=WORD, height=15, width=35)
 open_button = customtkinter.CTkButton(root, text="Open Target Photo", command=upload_picture)
 open_button.grid(row=0, column=0, padx=30, pady=20)
 
-watermark_button = customtkinter.CTkButton(root, text="Select Watermark options", command=select_text)
+watermark_button = customtkinter.CTkButton(root, text="Select Watermark options", command=select_watermark_type)
 watermark_button.grid(row=0, column=1, padx=30, pady=20)
+
+save_button = customtkinter.CTkButton(root, text="Save Image", command=save_img)
+save_button.grid(row=0, column=2, padx=30, pady=20)
+
+clear_button = customtkinter.CTkButton(root, text="Clear Image", command=clear_img)
+clear_button.grid(row=2, column=1, padx=30, pady=20)
 
 # labels
 image_label = customtkinter.CTkLabel(root)
 image_label.configure(text="")
 image_label.grid(row=1, column=1, pady=20)
-
-save_button = customtkinter.CTkButton(root, text="Save Image", command=save_img)
-save_button.grid(row=0, column=2, padx=30, pady=20)
 
 root.mainloop()
 
